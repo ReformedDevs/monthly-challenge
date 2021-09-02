@@ -69,6 +69,19 @@ determined these yet, but I will update this when it was been determined. I woul
 appreciate it if you did not knowingly submit entries which consistently run past
 the upper bounds of the time limit, as this is just wasted cycles on my cluster.
 
+## Tests
+
+Every group of tests will be made up of five unique game boards, and each will
+be run five times. The game board configurations will be as follows:
+
+- 1 run @ 8x8 w/ 10 mines
+- 1 run @ 16x16 w/ 40 mines
+- 3 run @ 24x24 w/ 99 mines
+
+This means your AI will be run 25 times and those times will be averaged for the
+final result. The same five game boards -- including the same seeds -- will be
+used for the entire month.
+
 ## Minesweeper API
 
 For the minesweeper logic we will be using the [`mineswepttd`](https://github.com/pard68/mineswepttd)
