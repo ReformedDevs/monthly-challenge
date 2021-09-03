@@ -1,0 +1,18 @@
+apiVersion: operators.0x44.pw
+Kind: PerformanceTestJob
+metadata:
+  name: my-example-entry
+spec:
+  tests:
+    test:
+      - easy
+      - medium
+      - hard_one
+      - hard_two
+      - hard_three
+    trials: 5
+    verify:
+      Job:
+        ...
+  Job:
+    ...
