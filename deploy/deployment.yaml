@@ -18,11 +18,11 @@ spec:
     spec:
       containers:
       - name: mineswepttd
-        image: pard68/mineswepttd
+        image: pard68/mineswepttd:master
         imagePullPolicy: Always
         ports:
         - name: http
-          containerPort: 80
+          containerPort: 8000
           protocol: TCP
         livenessProbe:
           httpGet:
