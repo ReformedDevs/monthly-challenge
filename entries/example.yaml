@@ -1,18 +1,205 @@
-apiVersion: operators.0x44.pw
-Kind: PerformanceTestJob
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
 metadata:
-  name: my-example-entry
+  generateName: test-runner-pipeline-
+  labels:
+    testAuthor: "Mr. Mojo Rising"
 spec:
-  tests:
-    test:
-      - easy
-      - medium
-      - hard_one
-      - hard_two
-      - hard_three
-    trials: 5
-    verify:
-      Job:
-        ...
-  Job:
-    ...
+  entrypoint:  test-runner
+  templates:
+  - name: solver
+    inputs:
+      parameters:
+        - name: server
+        - name: width
+        - name: height
+        - name: difficulty
+        - name: seed
+    container:
+      image: foo/bar:1.2.3
+      command: [run_it]
+      args: ["--server", "{{inputs.parameters.server}}",
+             "--width", "{{inputs.parameters.width}}",
+             "--height", "{{inputs.parameters.height}}",
+             "--difficulty", "{{inputs.parameters.difficulty}}",
+             "--seed", "{{inputs.parameters.seed}}"]
+
+  - name: verifier
+    inputs:
+      parameters:
+        - name: test-results
+      container:
+      image: pard68/trd-202109-verifier:latest
+      command: [verify]
+      args: ["{{inputs.parameters.test-results}}"]
+
+  - name: collector
+    inputs:
+      parameters:
+        - name: test-author
+        - name: test-status
+    container:
+      image: pard68/trd-202109-collector:latest
+      command: [collect]
+      args: ["--author", "{{workflow.labels.testAuthor}}",
+             "--test-status", "{{inputs.parameters.test-status}}"]
+
+  - name: update-configmap
+    inputs:
+      parameters:
+        - name: test-status
+    outputs:
+      artifacts:
+        - name: configmap
+          path: /tmp/configmap.yaml
+    container:
+      image: pard68/trd-202109-updater:latest
+      command: [update]
+      args: ["{{inputs.parameters.test-status}}"]
+
+  - name: apply-manifest
+    inputs:
+      parameters:
+        - name: resource
+      resource:
+        action: apply
+        manifest: "{{configmap-resource}}"
+
+  - name: test-runner
+    steps:
+      - - name: test-easy-1
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 8
+              - name: height
+                value: 8
+              - name: difficulty
+                value: 10
+              - name: seed
+                value: hello-world-strider
+      - - name: verify-test-1
+          template: verifier
+          arguments:
+            parameters:
+              - name: test-results
+                value: "{{steps.test-easy-1.outputs.result}}"
+      - - name: collect-test-1
+          template: collector
+          arguments:
+            parameters:
+              - name: test-status
+                value: "{{steps.verify-test-1.outputs.result}}"
+      - - name: test-medium-1
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 16
+              - name: height
+                value: 16
+              - name: difficulty
+                value: 40
+              - name: seed
+                value: hello-world-strider
+      - - name: verify-test-2
+          template: verifier
+          arguments:
+            parameters:
+              - name: test-results
+                value: "{{steps.test-medium-1.outputs.result}}"
+      - - name: collect-test-2
+          template: collector
+          arguments:
+            parameters:
+              - name: test-status
+                value: "{{steps.verify-test-2.outputs.result}}"
+      - - name: test-hard-1
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 24
+              - name: height
+                value: 24
+              - name: difficulty
+                value: 99
+              - name: seed
+                value: hello-world-strider
+      - - name: verify-test-3
+          template: verifier
+          arguments:
+            parameters:
+              - name: test-results
+                value: "{{steps.test-hard-1.outputs.result}}"
+      - - name: collect-test-3
+          template: collector
+          arguments:
+            parameters:
+              - name: test-status
+                value: "{{steps.verify-test-3.outputs.result}}"
+      - - name: test-hard-2
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 24
+              - name: height
+                value: 24
+              - name: difficulty
+                value: 99
+              - name: seed
+                value: hello-world-strider
+      - - name: verify-test-4
+          template: verifier
+          arguments:
+            parameters:
+              - name: test-results
+                value: "{{steps.test-hard-2.outputs.result}}"
+      - - name: collect-test-4
+          template: collector
+          arguments:
+            parameters:
+              - name: test-status
+                value: "{{steps.verify-test-4.outputs.result}}"
+      - - name: test-hard-3
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 24
+              - name: height
+                value: 24
+              - name: difficulty
+                value: 99
+              - name: seed
+                value: hello-world-strider
+      - - name: verify-test-5
+          template: verifier
+          arguments:
+            parameters:
+              - name: test-results
+                value: "{{steps.test-hard-3.outputs.result}}"
+      - - name: collect-test-5
+          template: collector
+          arguments:
+            parameters:
+              - name: test-status
+                value: "{{steps.verify-test-5.outputs.result}}"
+      - - name: apply-configmap
+          template: apply-manifest
+          arguments:
+            parameters:
+              - name: resource
+                value: "{{steps.collect-test-5.artifact.configmap}}"
