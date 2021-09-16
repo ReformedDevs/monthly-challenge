@@ -10,7 +10,7 @@ import requests
 @click.option('--seed')
 @logger.catch
 def main(server, width, height, difficulty, seed):
-    print(server, width, height, difficulty, seed)
+    logg.debug(server, width, height, difficulty, seed)
     logger.debug(f"server: {server}, width: {width}, height: {height}, difficulty: {difficulty}, seed: {seed}")
     uri = f"{server}/new/{width}/{height}/{difficulty}?{seed}"
     logger.info(f"Making request to {uri}")
