@@ -24,38 +24,23 @@ spec:
              "--difficulty", "{{inputs.parameters.difficulty}}",
              "--seed", "{{inputs.parameters.seed}}"]
 
-  - name: verifier
+  - name: updater
     inputs:
       parameters:
+        - name: server
+        - name: configmap_path
+          default: '/tmp/cm.yaml'
         - name: test-results
-      container:
+    outputs:
+      artifact:
+        - name: configmap-resource
+          path: /tmp/cm.yaml
+    container:
       image: pard68/trd-202109-verifier:latest
       command: [verify]
-      args: ["{{inputs.parameters.test-results}}"]
-
-  - name: collector
-    inputs:
-      parameters:
-        - name: test-author
-        - name: test-status
-    container:
-      image: pard68/trd-202109-collector:latest
-      command: [collect]
-      args: ["--author", "{{workflow.labels.testAuthor}}",
-             "--test-status", "{{inputs.parameters.test-status}}"]
-
-  - name: update-configmap
-    inputs:
-      parameters:
-        - name: test-status
-    outputs:
-      artifacts:
-        - name: configmap
-          path: /tmp/configmap.yaml
-    container:
-      image: pard68/trd-202109-updater:latest
-      command: [update]
-      args: ["{{inputs.parameters.test-status}}"]
+      args: ["--server", "{{inputs.parameters.server}}",
+             "--configmap_path", "{{inputs.parameters.configmap_path}}",
+             "--dump", "{{inputs.parameters.test-results}}"]
 
   - name: apply-manifest
     inputs:
@@ -81,18 +66,14 @@ spec:
                 value: 10
               - name: seed
                 value: hello-world-strider
-      - - name: verify-test-1
-          template: verifier
+      - - name: updater-test-1
+          template: updater
           arguments:
             parameters:
+              - name: server
+                value: foo.local
               - name: test-results
-                value: "{{steps.test-easy-1.outputs.result}}"
-      - - name: collect-test-1
-          template: collector
-          arguments:
-            parameters:
-              - name: test-status
-                value: "{{steps.verify-test-1.outputs.result}}"
+                value: "{{steps.test-hard-3.outputs.result}}"
       - - name: test-medium-1
           template: solver
           arguments:
@@ -107,18 +88,14 @@ spec:
                 value: 40
               - name: seed
                 value: hello-world-strider
-      - - name: verify-test-2
-          template: verifier
+      - - name: updater-test-2
+          template: updater
           arguments:
             parameters:
+              - name: server
+                value: foo.local
               - name: test-results
-                value: "{{steps.test-medium-1.outputs.result}}"
-      - - name: collect-test-2
-          template: collector
-          arguments:
-            parameters:
-              - name: test-status
-                value: "{{steps.verify-test-2.outputs.result}}"
+                value: "{{steps.test-hard-3.outputs.result}}"
       - - name: test-hard-1
           template: solver
           arguments:
@@ -133,18 +110,14 @@ spec:
                 value: 99
               - name: seed
                 value: hello-world-strider
-      - - name: verify-test-3
-          template: verifier
+      - - name: updater-test-3
+          template: updater
           arguments:
             parameters:
+              - name: server
+                value: foo.local
               - name: test-results
-                value: "{{steps.test-hard-1.outputs.result}}"
-      - - name: collect-test-3
-          template: collector
-          arguments:
-            parameters:
-              - name: test-status
-                value: "{{steps.verify-test-3.outputs.result}}"
+                value: "{{steps.test-hard-3.outputs.result}}"
       - - name: test-hard-2
           template: solver
           arguments:
@@ -159,18 +132,14 @@ spec:
                 value: 99
               - name: seed
                 value: hello-world-strider
-      - - name: verify-test-4
-          template: verifier
+      - - name: updater-test-4
+          template: updater
           arguments:
             parameters:
+              - name: server
+                value: foo.local
               - name: test-results
-                value: "{{steps.test-hard-2.outputs.result}}"
-      - - name: collect-test-4
-          template: collector
-          arguments:
-            parameters:
-              - name: test-status
-                value: "{{steps.verify-test-4.outputs.result}}"
+                value: "{{steps.test-hard-3.outputs.result}}"
       - - name: test-hard-3
           template: solver
           arguments:
@@ -185,18 +154,14 @@ spec:
                 value: 99
               - name: seed
                 value: hello-world-strider
-      - - name: verify-test-5
-          template: verifier
+      - - name: updater-test-5
+          template: updater
           arguments:
             parameters:
+              - name: server
+                value: foo.local
               - name: test-results
                 value: "{{steps.test-hard-3.outputs.result}}"
-      - - name: collect-test-5
-          template: collector
-          arguments:
-            parameters:
-              - name: test-status
-                value: "{{steps.verify-test-5.outputs.result}}"
       - - name: apply-configmap
           template: apply-manifest
           arguments:
