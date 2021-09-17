@@ -9,6 +9,7 @@ license = "GPLv3"
 python = "^3.9"
 loguru = "^0.5.3"
 click = "^8.0.1"
+requests = "^2.26.0"
 
 [tool.poetry.dev-dependencies]
 
