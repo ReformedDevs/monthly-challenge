@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: test-runner-pipeline-test-
+  name: test-runner-pipeline-test
   labels:
     testAuthor: "Mr. Mojo Rising"
 spec:
