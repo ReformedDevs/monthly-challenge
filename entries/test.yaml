@@ -2,8 +2,6 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   name: test-runner-pipeline-test
-  labels:
-    testAuthor: "Mr. Mojo Rising"
 spec:
   entrypoint:  test-runner
   templates:
