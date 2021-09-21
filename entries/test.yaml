@@ -1,0 +1,185 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-runner-pipeline-
+  labels:
+    testAuthor: "Mr. Mojo Rising"
+spec:
+  entrypoint:  test-runner
+  templates:
+  - name: solver
+    inputs:
+      parameters:
+        - name: server
+        - name: width
+        - name: height
+        - name: difficulty
+        - name: seed
+    container:
+      image: pard68/trd-202109-tester:latest
+      command: [run_it]
+      args: ["--server", "{{inputs.parameters.server}}",
+             "--width", "{{inputs.parameters.width}}",
+             "--height", "{{inputs.parameters.height}}",
+             "--difficulty", "{{inputs.parameters.difficulty}}",
+             "--seed", "{{inputs.parameters.seed}}"]
+
+  - name: updater
+    inputs:
+      parameters:
+        - name: server
+        - name: run
+        - name: author
+          default: 'TestyMcTestFace'
+        - name: configmap_path
+          default: '/tmp/cm.yaml'
+        - name: test-results
+    outputs:
+      artifact:
+        - name: configmap-resource
+          path: /tmp/cm.yaml
+    container:
+      image: pard68/trd-202109-updater:latest
+      command: [verify]
+      args: ["--server", "{{inputs.parameters.server}}",
+             "--author", "{{inputs.parameters.author}}",
+             "--run", "{{inputs.parameters.run}}",
+             "--configmap_path", "{{inputs.parameters.configmap_path}}",
+             "--dump", "{{inputs.parameters.test-results}}"]
+
+  - name: apply-manifest
+    inputs:
+      parameters:
+        - name: resource
+      resource:
+        action: apply
+        manifest: "{{configmap-resource}}"
+
+  - name: test-runner
+    steps:
+      - - name: test-easy-1
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 8
+              - name: height
+                value: 8
+              - name: difficulty
+                value: 10
+              - name: seed
+                value: hello-world-strider
+      - - name: updater-test-1
+          template: updater
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: run
+                value: "1"
+              - name: test-results
+                value: "{{steps.test-easy-1.outputs.result}}"
+      - - name: test-medium-1
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 16
+              - name: height
+                value: 16
+              - name: difficulty
+                value: 40
+              - name: seed
+                value: hello-world-strider
+      - - name: updater-test-2
+          template: updater
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: run
+                value: "2"
+              - name: test-results
+                value: "{{steps.test-medium-1.outputs.result}}"
+      - - name: test-hard-1
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 24
+              - name: height
+                value: 24
+              - name: difficulty
+                value: 99
+              - name: seed
+                value: hello-world-strider
+      - - name: updater-test-3
+          template: updater
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: run
+                value: "3"
+              - name: test-results
+                value: "{{steps.test-hard-1.outputs.result}}"
+      - - name: test-hard-2
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 24
+              - name: height
+                value: 24
+              - name: difficulty
+                value: 99
+              - name: seed
+                value: hello-world-strider
+      - - name: updater-test-4
+          template: updater
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: run
+                value: "4"
+              - name: test-results
+                value: "{{steps.test-hard-2.outputs.result}}"
+      - - name: test-hard-3
+          template: solver
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: width
+                value: 24
+              - name: height
+                value: 24
+              - name: difficulty
+                value: 99
+              - name: seed
+                value: hello-world-strider
+      - - name: updater-test-5
+          template: updater
+          arguments:
+            parameters:
+              - name: server
+                value: foo.local
+              - name: run
+                value: "5"
+              - name: test-results
+                value: "{{steps.test-hard-3.outputs.result}}"
+      - - name: apply-configmap
+          template: apply-manifest
+          arguments:
+            parameters:
+              - name: resource
+                value: "{{steps.collect-test-5.artifact.configmap}}"

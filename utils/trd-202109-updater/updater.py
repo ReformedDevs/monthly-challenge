@@ -66,14 +66,31 @@ def get_or_create_configmap(cm_path):
         file = create_configmap()
     return yaml.safe_load(file)
 
+def update_configmap(cm, author, run, status, time):
+    if not cm['metadata']['name']:
+        cm['metadata']['name'] = f"{author}-results"
+    data = yaml.safe_load(cm.get('data', {}))
+    data = data if data else {}
+    data['runs'] = data.get('runs', [])
+    runs = data['runs']
+    runs.append({run: {'status': status, 'elapsed_time': time}})
+    data['runs'] = runs
+    cm['data'] = yaml.dump(data)
+    return cm
+
+
+def write_configmap(path, cm):
+    with open(path, 'w') as f:
+       f.write(yaml.dump(cm))
 
 @click.command()
 @click.option('--server')
 @click.option('--author')
+@click.option('--run')
 @click.option('--configmap_path')
 @click.option('--dump')
 @logger.catch
-def main(server, author, configmap_path, dump):
+def main(server, author, run, configmap_path, dump):
     logger.info("Beginning verification process...")
     logger.debug(f"Server: {server}, dump: {dump}")
     status, elapsed_time, body = parse_dump(dump)
@@ -84,7 +101,13 @@ def main(server, author, configmap_path, dump):
     if not verified:
         logger.info("Updating status to match reality.")
         status = 'Win!' if status != 'Win!' else 'Lose!'
-    configmap = get_or_create_configmap(configmap_path)
+    logger.info("Updating or creating configmap")
+    configmap = update_configmap(get_or_create_configmap(configmap_path),
+                                 author, run, status, elapsed_time)
+    logger.debug(configmap)
+    logger.info(f"Writing updated configmap to {configmap_path}")
+    write_configmap(configmap_path, configmap)
+
 
 
 if __name__ == '__main__':
